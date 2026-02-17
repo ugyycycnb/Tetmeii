@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tet 2026 for Meii 🧧</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Quicksand:wght@400;700&display=swap');
+        :root { --deep-red: #8B0000; --gold: #FFD700; }
+        body, html { margin: 0; padding: 0; background: #1a0000; color: var(--gold); font-family: 'Quicksand', sans-serif; overflow: hidden; touch-action: manipulation; }
+
+        /* EFEK SALJU EMAS & MERAH (LEBIH MEWAH) */
+        #snow-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+        .flake { position: absolute; background: var(--gold); border-radius: 50%; opacity: 0.6; animation: snow linear infinite; }
+        @keyframes snow { to { transform: translateY(100vh) translateX(20px) rotate(360deg); } }
+
+        .slide { position: absolute; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10; padding: 30px; box-sizing: border-box; text-align: center; background: radial-gradient(circle, #3a0000 0%, #1a0000 100%); }
+        .active { display: flex !important; animation: zoomIn 0.6s ease-out; }
+        @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+
+        .title { font-family: 'Dancing Script', cursive; font-size: 3rem; margin-bottom: 15px; text-shadow: 0 0 15px rgba(255,215,0,0.3); }
+        .btn-gold { background: var(--gold); color: #2b0000; border: none; padding: 15px 40px; border-radius: 50px; font-weight: bold; cursor: pointer; margin-top: 30px; box-shadow: 0 8px 15px rgba(0,0,0,0.3); transition: 0.3s; }
+        .btn-gold:active { transform: translateY(3px); box-shadow: 0 4px 5px rgba(0,0,0,0.3); }
+
+        /* INTERACTIVE WAH! */
+        .touch-ripple { width: 250px; height: 250px; border: 2px solid var(--gold); border-radius: 50%; position: relative; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; }
+        .ripple-effect { position: absolute; border-radius: 50%; background: rgba(255,215,0,0.4); transform: scale(0); animation: ripple 0.8s linear; }
+        @keyframes ripple { to { transform: scale(3); opacity: 0; } }
+
+        .lantern-rope { height: 150px; width: 4px; background: var(--gold); position: absolute; top: 0; left: 50%; transform: translateX(-50%); }
+        .lantern-head { width: 80px; height: 100px; background: var(--deep-red); border: 3px solid var(--gold); border-radius: 10px; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; font-size: 40px; cursor: grab; }
+        
+        .gravity-zone { width: 100%; height: 300px; border: 2px dashed var(--gold); position: relative; overflow: hidden; }
+        .gravity-coin { position: absolute; font-size: 40px; cursor: pointer; transition: top 0.5s ease-in; }
+    </style>
+</head>
+<body>
+
+<div id="snow-container"></div>
+
+<div id="app">
+    <div class="slide active" id="s1">
+        <div style="font-size: 100px;">🏛️</div>
+        <h1 class="title">Tet 2026</h1>
+        <p>A royal greeting for Yen Nhi (Meii).</p>
+        <button class="btn-gold" onclick="go(2)">ENTER PALACE</button>
+    </div>
+
+    <div class="slide" id="s2">
+        <h2 class="title" style="font-size: 2rem;">To Meii...</h2>
+        <div style="background: rgba(0,0,0,0.5); padding: 20px; border-radius: 20px; border: 2px solid var(--gold); width: 85%;">
+            <p id="typing" style="font-weight: bold; line-height: 1.8; color: var(--gold); min-height: 120px;"></p>
+        </div>
+        <button class="btn-gold" id="b2" style="display:none;" onclick="go(3)">PROCEED</button>
+    </div>
+
+    <div class="slide" id="s3">
+        <h2 class="title">Golden Ripples</h2>
+        <p>Tap the water to send good vibes.</p>
+        <div class="touch-ripple" onclick="createRipple(event)">
+            <div style="font-size: 60px;">✨</div>
+        </div>
+        <p id="ripple-count" style="margin-top:10px;">Ripples: 0/3</p>
+        <button class="btn-gold" id="b3" style="display:none;" onclick="go(4)">VIBES SENT</button>
+    </div>
+
+    <div class="slide" id="s4">
+        <h2 class="title">Light the Way</h2>
+        <p>Pull the lantern down to ignite it!</p>
+        <div style="position: relative; height: 250px; width: 100px; border-top: 3px solid var(--gold);">
+            <div class="lantern-rope" id="rope"></div>
+            <div class="lantern-head" id="lantern" ontouchstart="pullStart(event)" ontouchmove="pullMove(event)" ontouchend="pullEnd()" onmousedown="pullStart(event)">🔥</div>
+        </div>
+        <button class="btn-gold" id="b4" style="display:none;" onclick="go(5)">IGNITED 🏮</button>
+    </div>
+
+    <div class="slide" id="s5">
+        <h2 class="title">Catch Luck</h2>
+        <p>Tap the coins before they fall!</p>
+        <div class="gravity-zone" id="coinZone">
+            <div class="gravity-coin" id="c1" onclick="catchCoin(this)" style="top:0; left:20%;">💰</div>
+            <div class="gravity-coin" id="c2" onclick="catchCoin(this)" style="top:0; left:50%;">💰</div>
+            <div class="gravity-coin" id="c3" onclick="catchCoin(this)" style="top:0; left:80%;">💰</div>
+        </div>
+        <button class="btn-gold" id="b5" style="display:none;" onclick="go(6)">CAUGHT! 🧧</button>
+    </div>
+
+    <div class="slide" id="s6">
+        <h2 class="title">Sky Painter</h2>
+        <p>Tap anywhere on the screen to paint fireworks!</p>
+        <div style="width: 100%; height: 300px; border: 1px solid var(--gold); background: rgba(0,0,0,0.3);" onclick="launchFirework(event)">
+            (Tap Here)
+        </div>
+        <p id="fire-count" style="margin-top:10px;">Fireworks: 0/5</p>
+        <button class="btn-gold" id="b6" style="display:none;" onclick="go(7)">BEAUTIFUL! 🎆</button>
+    </div>
+
+    <div class="slide" id="s7">
+        <h2 class="title">A Wish Scroll</h2>
+        <p>Swipe up to unroll the scroll.</p>
+        <div style="font-size: 80px; cursor: grab;" id="scroll" ontouchmove="unroll(event)" onmousemove="unroll(event)">📜</div>
+        <div id="scroll-msg" style="display: none; color: var(--gold); font-size: 1.2rem; margin-top: 20px;">"May peace be your constant companion."</div>
+        <button class="btn-gold" id="b7" style="display:none;" onclick="go(8)">AMEN 🙏</button>
+    </div>
+
+    <div class="slide" id="s8">
+        <h2 class="title">The New Gate</h2>
+        <p>Step into 2026 with grace.</p>
+        <div style="font-size: 80px;">🐎🚪</div>
+        <button class="btn-gold" onclick="go(9)">HAPPY TET</button>
+    </div>
+
+    <div class="slide" id="s9">
+        <h1 class="title">Chúc Mừng Năm Mới!</h1>
+        <p>To Yen Nhi (Meii),</p>
+        <p style="color: var(--gold); font-weight: bold; font-size: 1.5rem;">"An Khang - Thịnh Vượng"</p>
+        <p>Wishing you health, prosperity, and peace always.</p>
+        <button class="btn-gold" onclick="location.reload()">REPLAY JOURNEY 🔄</button>
+    </div>
+</div>
+
+<script>
+    // 1. Salju Emas (Latar Belakang Mewah)
+    const snow = document.getElementById('snow-container');
+    for(let i=0; i<30; i++) {
+        let f = document.createElement('div'); f.className = 'flake';
+        f.style.left = Math.random()*100 + 'vw';
+        let s = Math.random()*10+5 + 'px'; f.style.width = s; f.style.height = s;
+        f.style.animationDuration = Math.random()*5+5 + 's'; f.style.animationDelay = Math.random()*5 + 's';
+        snow.appendChild(f);
+    }
+
+    // 2. Navigasi
+    function go(n) {
+        document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+        document.getElementById('s' + n).classList.add('active');
+        if(n===2) startTyping();
+        if(n===5) startGravity();
+        if(n===9) confetti({ particleCount: 300, spread: 120, colors: ['#FFD700', '#8B0000'] });
+    }
+
+    // Slide 2: Typing
+    function startTyping() {
+        const text = "Hi Meii... 🏮 As Tet 2026 arrives, I want to send a sincere wish for your happiness. Thank you for the memories we shared. May this new year bring you peace and success in all you do. Happy New Year, Yen Nhi.";
+        let i = 0; let target = document.getElementById('typing'); target.innerHTML = "";
+        const t = setInterval(() => {
+            if(i < text.length) { target.innerHTML += text.charAt(i); i++; }
+            else { clearInterval(t); document.getElementById('b2').style.display = 'inline-block'; }
+        }, 50);
+    }
+
+    // Slide 3: Touch Ripple (Visual Wah)
+    let rCount = 0;
+    function createRipple(e) {
+        const ripple = document.createElement('div'); ripple.className = 'ripple-effect';
+        const rect = e.currentTarget.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        ripple.style.width = ripple.style.height = size + 'px';
+        ripple.style.left = e.clientX - rect.left - size/2 + 'px';
+        ripple.style.top = e.clientY - rect.top - size/2 + 'px';
+        e.currentTarget.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 800);
+        rCount++; document.getElementById('ripple-count').innerHTML = `Ripples: ${rCount}/3`;
+        if(rCount >= 3) document.getElementById('b3').style.display = 'inline-block';
+    }
+
+    // Slide 4: Lantern Pull (Fisika Tali)
+    let startY, moving = false;
+    function pullStart(e) { startY = e.touches ? e.touches[0].clientY : e.clientY; moving = true; }
+    function pullMove(e) {
+        if(!moving) return;
+        let currentY = e.touches ? e.touches[0].clientY : e.clientY;
+        let diff = currentY - startY;
+        if(diff > 0 && diff < 150) {
+            document.getElementById('lantern').style.transform = `translateX(-50%) translateY(${diff}px)`;
+            document.getElementById('rope').style.height = `${150 + diff}px`;
+        }
+    }
+    function pullEnd() {
+        moving = false;
+        document.getElementById('lantern').style.transition = '0.5s bounce';
+        document.getElementById('lantern').style.transform = 'translateX(-50%) translateY(0)';
+        document.getElementById('rope').style.height = '150px';
+        setTimeout(() => { document.getElementById('lantern').style.transition = ''; }, 500);
+        confetti({ origin: { y: 0.6 } });
+        document.getElementById('b4').style.display = 'inline-block';
+    }
+
+    // Slide 5: Gravity Coins
+    let caught = 0;
+    function startGravity() {
+        setTimeout(() => document.getElementById('c1').style.top = '250px', 500);
+        setTimeout(() => document.getElementById('c2').style.top = '250px', 1500);
+        setTimeout(() => document.getElementById('c3').style.top = '250px', 2500);
+    }
+    function catchCoin(el) {
+        if(el.style.top !== '250px') {
+            el.innerHTML = '✨'; el.style.transition = '0s'; el.style.top = '0';
+            caught++; if(caught >= 3) document.getElementById('b5').style.display = 'inline-block';
+        }
+    }
+
+    // Slide 6: Fireworks
+    let fCount = 0;
+    function launchFirework(e) {
+        confetti({ origin: { x: e.clientX/window.innerWidth, y: e.clientY/window.innerHeight } });
+        fCount++; document.getElementById('fire-count').innerHTML = `Fireworks: ${fCount}/5`;
+        if(fCount >= 5) document.getElementById('b6').style.display = 'inline-block';
+    }
+
+    // Slide 7: Unroll Scroll
+    let scrollY = 0;
+    function unroll(e) {
+        scrollY++;
+        if(scrollY > 20) {
+            document.getElementById('scroll').style.transform = 'rotateX(90deg)';
+            document.getElementById('scroll-msg').style.display = 'block';
+            document.getElementById('b7').style.display = 'inline-block';
+        }
+    }
+</script>
+</body>
+</html>
