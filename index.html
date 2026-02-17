@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tet 2026: Meii's Journey 🧧</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@300;600&display=swap');
+        :root { --gold: #D4AF37; --bg: #0f0f0f; --crimson: #7b0000; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; font-family: 'Montserrat', sans-serif; overflow: hidden; touch-action: none; }
+
+        /* Slide Engine */
+        .slide { position: absolute; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; background: radial-gradient(circle at center, #2a0000 0%, #0f0f0f 100%); z-index: 10; }
+        .active { display: flex !important; animation: scaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(1.1); filter: blur(10px); } to { opacity: 1; transform: scale(1); filter: blur(0); } }
+
+        .title { font-family: 'Dancing Script', cursive; font-size: 3rem; color: var(--gold); margin-bottom: 5px; }
+        .btn-fancy { background: none; border: 1px solid var(--gold); color: var(--gold); padding: 12px 30px; border-radius: 2px; cursor: pointer; margin-top: 30px; letter-spacing: 3px; font-weight: 600; transition: 0.3s; display: none; }
+        .btn-fancy.visible { display: block; animation: fadeIn 1s; }
+
+        /* INTERAKSI 1: MISTY MIRROR (Slide 3) */
+        #mirror-canvas { background: rgba(255,255,255,0.1); border-radius: 50%; border: 4px solid var(--gold); cursor: crosshair; box-shadow: 0 0 30px rgba(212, 175, 55, 0.2); }
+
+        /* INTERAKSI 2: PAPER CRANE (Slide 4) */
+        .crane-box { width: 150px; height: 150px; position: relative; cursor: pointer; transition: 0.3s; }
+        .crane-box:active { transform: scale(0.9); }
+        .press-bar { width: 150px; height: 4px; background: #333; margin-top: 20px; position: relative; overflow: hidden; }
+        .press-progress { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: var(--gold); box-shadow: 0 0 10px var(--gold); }
+
+        /* INTERAKSI 3: DRAG COIN (Slide 5) */
+        .drag-zone { width: 300px; height: 400px; border: 1px dashed rgba(212,175,55,0.3); position: relative; border-radius: 20px; }
+        .coin-drag { width: 60px; height: 60px; background: var(--gold); border-radius: 50%; position: absolute; display: flex; align-items: center; justify-content: center; font-weight: bold; color: black; box-shadow: 0 4px 10px rgba(0,0,0,0.5); border: 2px solid #fff; cursor: move; z-index: 50; }
+        .pouch { width: 100px; height: 120px; background: var(--crimson); border: 2px solid var(--gold); border-radius: 10px 10px 40px 40px; position: absolute; bottom: 20px; left: 100px; display: flex; align-items: center; justify-content: center; font-size: 40px; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div class="slide active" id="s1">
+        <h1 class="title">Tet 2026</h1>
+        <p style="opacity: 0.6; font-size: 0.8rem; letter-spacing: 2px;">EXCLUSIVE FOR YEN NHI (MEII)</p>
+        <button class="btn-fancy visible" onclick="go(2)">BEGIN THE RITUAL</button>
+    </div>
+
+    <div class="slide" id="s2">
+        <h2 class="title">The Scroll</h2>
+        <div style="max-width: 80%; text-align: left; border-left: 2px solid var(--gold); padding-left: 20px;">
+            <p id="txt2" style="line-height: 1.6;"></p>
+        </div>
+        <button class="btn-fancy" id="b2" onclick="go(3)">NEXT</button>
+    </div>
+
+    <div class="slide" id="s3">
+        <h2 class="title">Sacred Mirror</h2>
+        <p>Wipe the mist to see the light.</p>
+        <div style="position: relative;">
+            <div style="position: absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index: 1; color: var(--gold); font-size: 1.2rem; width: 150px;">Bình yên cho Meii</div>
+            <canvas id="mirror-canvas" width="250" height="250" style="position: relative; z-index: 2;"></canvas>
+        </div>
+        <button class="btn-fancy" id="b3" onclick="go(4)">REVEALED</button>
+    </div>
+
+    <div class="slide" id="s4">
+        <h2 class="title">Messenger</h2>
+        <p>Hold your finger on the crane to fly.</p>
+        <div class="crane-box" id="crane" onmousedown="startHold()" ontouchstart="startHold()" onmouseup="endHold()" ontouchend="endHold()">
+            <div style="font-size: 80px;" id="crane-emoji">🕊️</div>
+        </div>
+        <div class="press-bar"><div class="press-progress" id="p-bar"></div></div>
+        <button class="btn-fancy" id="b4" onclick="go(5)">DEPARTED</button>
+    </div>
+
+    <div class="slide" id="s5">
+        <h2 class="title">Wealth Pouch</h2>
+        <p>Drag the coin into the red pouch.</p>
+        <div class="drag-zone" id="drag-zone">
+            <div class="coin-drag" id="coin" style="top: 50px; left: 120px;">🧧</div>
+            <div class="pouch" id="pouch">💰</div>
+        </div>
+        <button class="btn-fancy" id="b5" onclick="go(6)">COLLECTED</button>
+    </div>
+
+    <div class="slide" id="s6">
+        <h2 class="title">Celestial Fire</h2>
+        <p>Tap anywhere to light up her sky.</p>
+        <div onclick="confetti({particleCount:100, origin:{y:0.7}})" style="width:200px; height:200px; border-radius:50%; border:1px solid var(--gold); display:flex; align-items:center; justify-content:center;">✨</div>
+        <button class="btn-fancy visible" onclick="go(7)">GLORIOUS</button>
+    </div>
+
+    <div class="slide" id="s7">
+        <h2 class="title">Inner Voice</h2>
+        <p>A message hidden in 2026...</p>
+        <div style="font-size: 50px; cursor:pointer;" onclick="this.innerHTML='Hạnh phúc nhé Meii'; this.style.fontSize='1.5rem'; document.getElementById('b7').classList.add('visible');">🏮</div>
+        <button class="btn-fancy" id="b7" onclick="go(8)">PROMISED</button>
+    </div>
+
+    <div class="slide" id="s8">
+        <h2 class="title">New Horizon</h2>
+        <p>Ready to enter a new cycle?</p>
+        <div style="font-size: 80px; filter: drop-shadow(0 0 10px var(--gold));">⛩️</div>
+        <button class="btn-fancy visible" onclick="go(9)">OPEN GATE</button>
+    </div>
+
+    <div class="slide" id="s9">
+        <h1 class="title">Happy Tet!</h1>
+        <p>Yen Nhi (Meii)</p>
+        <p style="font-weight: 300; letter-spacing: 5px; color: var(--gold);">2026</p>
+        <button class="btn-fancy visible" onclick="location.reload()">REVERSE TIME</button>
+    </div>
+</div>
+
+<script>
+    function go(n) {
+        document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+        document.getElementById('s'+n).classList.add('active');
+        if(n===2) typeText();
+        if(n===3) initMirror();
+        if(n===9) confetti({particleCount: 300, spread: 100, origin: {y:0.6}, colors:['#D4AF37','#7b0000']});
+    }
+
+    // Slide 2: Typing
+    function typeText() {
+        const text = "Hi Meii, Tet 2026 is a blank page. Let's fill it with peace and joy. This is for you, and only you.";
+        let i = 0; const target = document.getElementById('txt2'); target.innerHTML = "";
+        let timer = setInterval(() => {
+            if(i<text.length) { target.innerHTML += text.charAt(i); i++; }
+            else { clearInterval(timer); document.getElementById('b2').classList.add('visible'); }
+        }, 40);
+    }
+
+    // Slide 3: Mirror Logic
+    function initMirror() {
+        const canvas = document.getElementById('mirror-canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#888'; ctx.fillRect(0,0,250,250);
+        ctx.globalCompositeOperation = 'destination-out';
+        
+        let cleaned = 0;
+        const scrub = (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX || e.touches[0].clientX) - rect.left;
+            const y = (e.clientY || e.touches[0].clientY) - rect.top;
+            ctx.beginPath(); ctx.arc(x, y, 25, 0, Math.PI*2); ctx.fill();
+            cleaned++;
+            if(cleaned > 100) document.getElementById('b3').classList.add('visible');
+        };
+        canvas.addEventListener('mousemove', scrub);
+        canvas.addEventListener('touchmove', scrub);
+    }
+
+    // Slide 4: Hold Logic
+    let holdTimer, progress = 0;
+    function startHold() {
+        holdTimer = setInterval(() => {
+            progress += 2;
+            document.getElementById('p-bar').style.width = progress + '%';
+            if(progress >= 100) {
+                clearInterval(holdTimer);
+                document.getElementById('crane-emoji').style.transform = 'translateY(-200px) scale(0)';
+                document.getElementById('crane-emoji').style.transition = '2s ease-in';
+                document.getElementById('b4').classList.add('visible');
+            }
+        }, 30);
+    }
+    function endHold() { clearInterval(holdTimer); if(progress<100){ progress=0; document.getElementById('p-bar').style.width='0%'; }}
+
+    // Slide 5: Drag Logic
+    const coin = document.getElementById('coin');
+    const pouch = document.getElementById('pouch');
+    let isDragging = false;
+
+    coin.addEventListener('touchstart', (e) => isDragging = true);
+    window.addEventListener('touchmove', (e) => {
+        if(!isDragging) return;
+        const rect = document.getElementById('drag-zone').getBoundingClientRect();
+        const x = e.touches[0].clientX - rect.left - 30;
+        const y = e.touches[0].clientY - rect.top - 30;
+        coin.style.left = x + 'px'; coin.style.top = y + 'px';
+        
+        const pouchRect = pouch.getBoundingClientRect();
+        if(e.touches[0].clientX > pouchRect.left && e.touches[0].clientX < pouchRect.right &&
+           e.touches[0].clientY > pouchRect.top) {
+            isDragging = false; coin.style.display = 'none';
+            pouch.innerHTML = '🧧'; document.getElementById('b5').classList.add('visible');
+        }
+    });
+    window.addEventListener('touchend', () => isDragging = false);
+
+</script>
+</body>
+</html>
